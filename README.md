@@ -22,4 +22,7 @@ python3 provsmini_sysex_merge.py /path/to/your/collection
 Then, upload the result file (by default: combined.syx in the source folder) with SynthTribe (Send -> All Presets).
 
 ## Disclaimer
-I'm not responsible for any damage inflicted upon the synthesizer! I've tried a few combinations, and they all uploaded fine, although I couldn't figure out the role of the first byte of the terminator. My best guess is that it's the bank selector on other Behringer synthesizers, but it's ignored here.
+I'm not responsible for any damage inflicted upon the synthesizer! I've tried a few combinations, and they all uploaded fine, although I couldn't figure out the role of the first byte of the terminator.
+
+**UPDATE** It's a checksum, added a [calculation](https://github.com/RomanKubiak/ctrlr/discussions/634#discussioncomment-9183868) for it.
+

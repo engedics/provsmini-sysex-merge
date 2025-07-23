@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 
 PREAMBLE = bytes.fromhex('F000203200013310')
-TERMINATOR = bytes.fromhex('21F7')
+TERMINATOR = bytes.fromhex('F7')
 
 
 def parse_arguments():
@@ -51,23 +51,23 @@ def parse_files(directory_path, extension):
 
 
 def combine_files(sysex_contents):
-    sysex_bytes = []
-
-    logging.debug(f'Adding preamble: {PREAMBLE.hex()}')
-    sysex_bytes.append(PREAMBLE)
+    combined_contents = []
     for sysex_content in sysex_contents:
         sysex_stripped = sysex_content[8:-3]
         logging.debug(f'Stripped contents: {sysex_stripped.hex()}')
-        sysex_bytes.append(sysex_stripped)
+        combined_contents.append(sysex_stripped)
 
-    logging.debug(f'Adding terminator: {TERMINATOR.hex()}')
-    sysex_bytes.append(TERMINATOR)
+    return bytes().join(combined_contents)
 
-    return sysex_bytes
+
+def calculate_checksum(combined_contents):
+    checksum_int = (~sum(combined_contents) + 1) & 127
+    return checksum_int.to_bytes()
 
 
 def main():
     args = parse_arguments()
+    sysex_bytes = []
 
     logging.basicConfig(
         format='%(levelname)s: %(message)s' if args.verbose else '%(message)s',
@@ -76,8 +76,18 @@ def main():
     directory_path = Path(args.directory)
     sysex_contents = parse_files(directory_path, args.extension)
 
+    logging.debug(f'Adding preamble: {PREAMBLE.hex()}')
+    sysex_bytes.append(PREAMBLE)
+    combined_contents = combine_files(sysex_contents)
+    logging.debug(f'Adding combined bytes: {combined_contents.hex()}')
+    sysex_bytes.append(combined_contents)
+    checksum = calculate_checksum(combined_contents)
+    logging.debug(f'Adding calculated checksum: {checksum.hex()}')
+    sysex_bytes.append(checksum)
+    logging.debug(f'Adding terminator: {TERMINATOR.hex()}')
+    sysex_bytes.append(TERMINATOR)
+
     output_path = Path(args.output or f'{args.directory}/combined.syx')
-    sysex_bytes = combine_files(sysex_contents)
     logging.info(f'Writing the combined SysEx to {output_path.absolute()}')
     output_path.write_bytes(bytes().join(sysex_bytes))
     logging.info('Done!')
